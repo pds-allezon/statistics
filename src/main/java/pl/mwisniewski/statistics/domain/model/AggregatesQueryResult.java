@@ -1,4 +1,8 @@
 package pl.mwisniewski.statistics.domain.model;
 
-public record AggregatesQueryResult() {
+import java.util.List;
+
+public record AggregatesQueryResult(
+        List<QueryResultRow> rows
+) {
 }

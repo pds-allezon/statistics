@@ -1,14 +1,14 @@
 package pl.mwisniewski.statistics.domain.model;
 
-import java.util.List;
 import java.util.Optional;
 
-public record AggregatesQuery(
-        TimeRange timeRange,
+public record QueryResultRow(
+        String timeBucketStr,
         Action action,
-        List<Aggregate> aggregates,
         Optional<String> origin,
         Optional<String> brandId,
-        Optional<String> categoryId
+        Optional<String> categoryId,
+        Optional<Integer> sumPrice,
+        Optional<Integer> count
 ) {
 }
