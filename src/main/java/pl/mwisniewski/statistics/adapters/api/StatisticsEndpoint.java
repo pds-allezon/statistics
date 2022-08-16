@@ -44,9 +44,9 @@ public class StatisticsEndpoint {
                 domainTimeRange(timeRangeStr),
                 action,
                 aggregates,
-                Optional.of(origin),
-                Optional.of(brandId),
-                Optional.of(categoryId)
+                Optional.ofNullable(origin),
+                Optional.ofNullable(brandId),
+                Optional.ofNullable(categoryId)
         );
     }
 
