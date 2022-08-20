@@ -19,7 +19,7 @@ public record AggregatesResponse(
                                         AggregatesQueryResult result) {
         return new AggregatesResponse(
                 createResultColumns(query),
-                createResultRows(result.rows(), query.aggregates().get(0) == Aggregate.count)
+                createResultRows(result.rows(), query.aggregates().get(0) == Aggregate.COUNT)
         );
     }
 
@@ -38,7 +38,7 @@ public record AggregatesResponse(
 
     private static List<String> createAggregatesColumns(List<Aggregate> aggregates) {
         return aggregates.stream()
-                .map(it -> it == Aggregate.count ? COUNT_COLUMN_NAME : SUM_PRICE_COLUMN_NAME)
+                .map(it -> it == Aggregate.COUNT ? COUNT_COLUMN_NAME : SUM_PRICE_COLUMN_NAME)
                 .toList();
     }
 

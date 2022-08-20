@@ -26,7 +26,7 @@ class StatisticsApplicationTests {
         // given
         String timeRange = "2022-03-22T12:15:00.000_2022-03-22T12:30:00.000";
         Action action = Action.BUY;
-        List<Aggregate> aggregates = List.of(Aggregate.count);
+        List<Aggregate> aggregates = List.of(Aggregate.COUNT);
 
         List<String> expectedColumns = List.of("1m_bucket", "action", "sum_price");
         List<List<String>> expectedRows = List.of(
