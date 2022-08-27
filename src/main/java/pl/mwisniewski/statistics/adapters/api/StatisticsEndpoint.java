@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RestController;
 import pl.mwisniewski.statistics.domain.StatisticsService;
 import pl.mwisniewski.statistics.domain.model.*;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -41,7 +40,7 @@ public class StatisticsEndpoint {
     private AggregatesQuery domainQuery(String timeRangeStr, Action action, List<Aggregate> aggregates,
                                         String origin, String brandId, String categoryId) {
         return new AggregatesQuery(
-                domainTimeRange(timeRangeStr),
+                domainBucketRange(timeRangeStr),
                 action,
                 aggregates,
                 Optional.ofNullable(origin),
@@ -50,21 +49,16 @@ public class StatisticsEndpoint {
         );
     }
 
-    private TimeRange domainTimeRange(String timeRangeStr) {
+    private BucketRange domainBucketRange(String timeRangeStr) {
         String[] splitTimeRange = timeRangeStr.split("_");
-        String startTimeRange = splitTimeRange[0] + DEFAULT_TIMEZONE_SUFFIX;
-        String endTimeRange = splitTimeRange[1] + DEFAULT_TIMEZONE_SUFFIX;
+        String startBucket = splitTimeRange[0].substring(0, 16);
+        String endBucket = splitTimeRange[1].substring(0, 16);
 
-        return new TimeRange(
-                ZonedDateTime.parse(startTimeRange).toInstant().toEpochMilli(),
-                ZonedDateTime.parse(endTimeRange).toInstant().toEpochMilli()
-        );
+        return new BucketRange(startBucket, endBucket);
     }
 
     private AggregatesResponse createEndpointResponse(AggregatesQuery query,
                                                       AggregatesQueryResult result) {
         return AggregatesResponse.of(query, result);
     }
-
-    private static final String DEFAULT_TIMEZONE_SUFFIX = "Z";
 }

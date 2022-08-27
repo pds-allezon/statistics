@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.ActiveProfiles;
 import pl.mwisniewski.statistics.adapters.api.AggregatesResponse;
 import pl.mwisniewski.statistics.adapters.api.StatisticsEndpoint;
 import pl.mwisniewski.statistics.domain.model.Action;
@@ -12,6 +13,7 @@ import pl.mwisniewski.statistics.domain.model.Aggregate;
 import java.util.List;
 
 @SpringBootTest
+@ActiveProfiles("test")
 class StatisticsApplicationTests {
 
     @Autowired

@@ -10,11 +10,22 @@ sourceCompatibility = '17'
 
 repositories {
 	mavenCentral()
+	maven {
+		url 'https://packages.confluent.io/maven/'
+	}
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	implementation('org.springframework.boot:spring-boot-starter-web'){
+		exclude module: 'logback-classic'
+	}
+	implementation 'org.springframework.kafka:spring-kafka:2.9.0'
+	implementation 'io.confluent.ksql:ksqldb-api-client:7.2.0'
+	implementation 'io.confluent.ksql:ksqldb-udf:7.2.0'
+
+	testImplementation('org.springframework.boot:spring-boot-starter-test'){
+		exclude module: 'logback-classic'
+	}
 }
 
 tasks.named('test') {
