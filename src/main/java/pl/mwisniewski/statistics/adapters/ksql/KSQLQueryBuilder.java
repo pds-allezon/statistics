@@ -38,7 +38,7 @@ public class KSQLQueryBuilder {
     }
 
     private String where() {
-        String where = "WHERE bucket >= '%s' AND bucket <= '%s' AND action = '%s'"
+        String where = "WHERE bucket >= '%s' AND bucket < '%s' AND action = '%s'"
                 .formatted(this.startBucket, this.endBucket, this.action);
         where += origin.isPresent() ? " AND origin = '%s'".formatted(origin.get()) : "";
         where += brandId.isPresent() ? " AND brandId = '%s'".formatted(brandId.get()) : "";
