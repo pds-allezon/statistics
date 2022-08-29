@@ -9,7 +9,6 @@ import pl.mwisniewski.statistics.domain.StatisticsService;
 import pl.mwisniewski.statistics.domain.model.*;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @RestController
@@ -34,7 +33,7 @@ public class StatisticsEndpoint {
         AggregatesQueryResult result = statisticsService.getAggregates(query);
         AggregatesResponse response = createEndpointResponse(query, result);
 
-        return ResponseEntity.ok(Objects.requireNonNullElse(expectedResult, response));
+        return ResponseEntity.ok(response);
     }
 
     private AggregatesQuery domainQuery(String timeRangeStr, Action action, List<Aggregate> aggregates,

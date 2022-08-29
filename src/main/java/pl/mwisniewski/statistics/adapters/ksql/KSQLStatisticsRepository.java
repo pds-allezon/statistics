@@ -66,7 +66,7 @@ public class KSQLStatisticsRepository implements StatisticsRepository {
 
     private QueryResultRow toDomainRow(AggregatesQuery query, Row ksqlRow) {
         return new QueryResultRow(
-                ksqlRow.getString("BUCKET"),
+                ksqlRow.getString("BUCKET") + ":00",
                 Action.valueOf(ksqlRow.getString("ACTION")),
                 query.origin().map(it -> ksqlRow.getString("ORIGIN")),
                 query.brandId().map(it -> ksqlRow.getString("BRANDID")),
