@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 public record AggregatesQuery(
-        TimeRange timeRange,
+        BucketRange bucketRange,
         Action action,
         List<Aggregate> aggregates,
         Optional<String> origin,

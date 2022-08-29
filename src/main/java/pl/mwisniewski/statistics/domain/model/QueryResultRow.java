@@ -8,7 +8,7 @@ public record QueryResultRow(
         Optional<String> origin,
         Optional<String> brandId,
         Optional<String> categoryId,
-        Optional<Integer> sumPrice,
-        Optional<Integer> count
+        long sumPrice,
+        long count
 ) {
 }

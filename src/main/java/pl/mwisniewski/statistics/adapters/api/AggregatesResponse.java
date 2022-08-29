@@ -8,7 +8,6 @@ import pl.mwisniewski.statistics.domain.model.QueryResultRow;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 public record AggregatesResponse(
@@ -19,7 +18,7 @@ public record AggregatesResponse(
                                         AggregatesQueryResult result) {
         return new AggregatesResponse(
                 createResultColumns(query),
-                createResultRows(result.rows(), query.aggregates().get(0) == Aggregate.COUNT)
+                createResultRows(result.rows(), query.aggregates())
         );
     }
 
@@ -42,13 +41,13 @@ public record AggregatesResponse(
                 .toList();
     }
 
-    private static List<List<String>> createResultRows(List<QueryResultRow> rows, Boolean countColumnFirst) {
+    private static List<List<String>> createResultRows(List<QueryResultRow> rows, List<Aggregate> aggregates) {
         return rows.stream()
-                .map(it -> createResultRow(it, countColumnFirst))
+                .map(it -> createResultRow(it, aggregates))
                 .toList();
     }
 
-    private static List<String> createResultRow(QueryResultRow row, Boolean countColumnFirst) {
+    private static List<String> createResultRow(QueryResultRow row, List<Aggregate> aggregates) {
         List<String> values = new ArrayList<>(Stream.of(
                 row.timeBucketStr(),
                 row.action().toString(),
@@ -56,19 +55,20 @@ public record AggregatesResponse(
                 row.brandId().orElse(null),
                 row.categoryId().orElse(null)
         ).filter(Objects::nonNull).toList());
-        values.addAll(createAggregatesRow(row, countColumnFirst));
+        values.addAll(createAggregatesRow(row, aggregates));
 
         return values;
     }
 
-    private static List<String> createAggregatesRow(QueryResultRow row, Boolean countColumnFirst) {
-        List<Optional<Integer>> values = countColumnFirst
-                ? List.of(row.count(), row.sumPrice())
-                : List.of(row.sumPrice(), row.count());
+    private static List<String> createAggregatesRow(QueryResultRow row, List<Aggregate> aggregates) {
+        List<Long> values = new ArrayList<>();
+        values.add(aggregates.get(0) == Aggregate.COUNT ? row.count() : row.sumPrice());
+
+        if (aggregates.size() > 1) {
+            values.add(aggregates.get(1) == Aggregate.COUNT ? row.count() : row.sumPrice());
+        }
 
         return values.stream()
-                .map(it -> it.orElse(null))
-                .filter(Objects::nonNull)
                 .map(Object::toString)
                 .toList();
     }
