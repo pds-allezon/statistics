@@ -13,8 +13,13 @@ import pl.mwisniewski.statistics.domain.model.AggregatesQueryResult;
 import pl.mwisniewski.statistics.domain.model.QueryResultRow;
 import pl.mwisniewski.statistics.domain.port.StatisticsRepository;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 @Profile("prod")
@@ -45,10 +50,7 @@ public class KSQLStatisticsRepository implements StatisticsRepository {
         }
 
         return new AggregatesQueryResult(
-                resultRows.stream()
-                        .map(it -> toDomainRow(query, it))
-                        .sorted(Comparator.comparing(QueryResultRow::timeBucketStr))
-                        .toList()
+                generateResultRows(query, resultRows)
         );
     }
 
@@ -62,6 +64,41 @@ public class KSQLStatisticsRepository implements StatisticsRepository {
         builder = query.categoryId().map(builder::withCategoryId).orElse(builder);
 
         return builder.build();
+    }
+
+    private List<QueryResultRow> generateResultRows(AggregatesQuery query, List<Row> ksqlRows) {
+        List<String> buckets = generateBuckets(
+                query.bucketRange().startBucket(), query.bucketRange().endBucket()
+        );
+
+        List<QueryResultRow> domainRows = ksqlRows.stream().map(it -> toDomainRow(query, it)).toList();
+
+        Map<String, List<QueryResultRow>> rowPerBucket = domainRows.stream()
+                .collect(Collectors.groupingBy(QueryResultRow::timeBucketStr));
+
+        return buckets
+                .stream()
+                .map(bucket -> rowPerBucket.containsKey(bucket)
+                        ? rowPerBucket.get(bucket).get(0)
+                        : new QueryResultRow(bucket, query.action(), query.origin(), query.brandId(), query.categoryId(), 0, 0)
+                )
+                .sorted(Comparator.comparing(QueryResultRow::timeBucketStr))
+                .toList();
+    }
+
+    private List<String> generateBuckets(String startBucketInclusive, String endBucketExclusive) {
+        LocalDateTime startBucket = LocalDateTime.parse(startBucketInclusive);
+        LocalDateTime endBucket = LocalDateTime.parse(endBucketExclusive);
+
+        List<String> buckets = new ArrayList<>();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+        do {
+            buckets.add(startBucket.format(formatter));
+            startBucket = startBucket.plusMinutes(1);
+        } while (startBucket.compareTo(endBucket) < 0);
+
+        return buckets;
     }
 
     private QueryResultRow toDomainRow(AggregatesQuery query, Row ksqlRow) {
