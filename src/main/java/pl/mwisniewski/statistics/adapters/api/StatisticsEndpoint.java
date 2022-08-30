@@ -1,5 +1,7 @@
 package pl.mwisniewski.statistics.adapters.api;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,6 +35,10 @@ public class StatisticsEndpoint {
         AggregatesQueryResult result = statisticsService.getAggregates(query);
         AggregatesResponse response = createEndpointResponse(query, result);
 
+        if (!response.equals(expectedResult)) {
+            logger.warn("Expected result: {} is different than actual: {}", expectedResult, response);
+        }
+
         return ResponseEntity.ok(response);
     }
 
@@ -60,4 +66,6 @@ public class StatisticsEndpoint {
                                                       AggregatesQueryResult result) {
         return AggregatesResponse.of(query, result);
     }
+
+    private final Logger logger = LoggerFactory.getLogger(StatisticsEndpoint.class);
 }
