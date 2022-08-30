@@ -13,6 +13,8 @@ import pl.mwisniewski.statistics.domain.model.*;
 import java.util.List;
 import java.util.Optional;
 
+import static java.lang.Math.max;
+
 @RestController
 public class StatisticsEndpoint {
     private final StatisticsService statisticsService;
@@ -36,7 +38,7 @@ public class StatisticsEndpoint {
         AggregatesResponse response = createEndpointResponse(query, result);
 
         if (!response.equals(expectedResult)) {
-            logger.warn("Expected result: {} is different than actual: {}", expectedResult, response);
+            logDifferentAnswers(response, expectedResult);
         }
 
         return ResponseEntity.ok(response);
@@ -65,6 +67,28 @@ public class StatisticsEndpoint {
     private AggregatesResponse createEndpointResponse(AggregatesQuery query,
                                                       AggregatesQueryResult result) {
         return AggregatesResponse.of(query, result);
+    }
+
+    private void logDifferentAnswers(AggregatesResponse actualResult, AggregatesResponse expectedResult) {
+        if (actualResult == null || expectedResult == null) {
+            return;
+        }
+
+        logger.warn("Answers are different!");
+
+        int actualResultSize = actualResult.rows().size();
+        int expectedResultSize = expectedResult.rows().size();
+        if (actualResultSize != expectedResultSize) {
+            logger.warn("Actual result has {} rows, Expected result has {} rows", actualResultSize, expectedResultSize);
+        }
+
+        for (int i = 0; i < max(actualResultSize, expectedResultSize); i++) {
+            List<String> actual = actualResult.rows().get(i);
+            List<String> expected = expectedResult.rows().get(i);
+            if (actualResult.rows().get(i) != expectedResult.rows().get(i)) {
+                logger.warn("Row {} is not matching, actual: {}, expected: {}", i, actual, expected);
+            }
+        }
     }
 
     private final Logger logger = LoggerFactory.getLogger(StatisticsEndpoint.class);
