@@ -32,6 +32,7 @@ public class KSQLStatisticsRepository implements StatisticsRepository {
             @Value("${aggregates.ksql.server.port}") int port
     ) {
         ClientOptions options = ClientOptions.create()
+                .setExecuteQueryMaxResultRows(100000)
                 .setHost(host)
                 .setPort(port);
 
