@@ -13,6 +13,7 @@ import pl.mwisniewski.statistics.domain.model.AggregatesQueryResult;
 import pl.mwisniewski.statistics.domain.model.QueryResultRow;
 import pl.mwisniewski.statistics.domain.port.StatisticsRepository;
 
+import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -73,14 +74,20 @@ public class KSQLStatisticsRepository implements StatisticsRepository {
 
         List<QueryResultRow> domainRows = ksqlRows.stream().map(it -> toDomainRow(query, it)).toList();
 
-        Map<String, List<QueryResultRow>> rowPerBucket = domainRows.stream()
+        Map<String, List<QueryResultRow>> rowsPerBucket = domainRows.stream()
                 .collect(Collectors.groupingBy(QueryResultRow::timeBucketStr));
 
         return buckets
                 .stream()
-                .map(bucket -> rowPerBucket.containsKey(bucket)
-                        ? rowPerBucket.get(bucket).get(0)
-                        : new QueryResultRow(bucket, query.action(), query.origin(), query.brandId(), query.categoryId(), 0, 0)
+                .map(bucket -> new QueryResultRow(
+                                bucket,
+                                query.action(),
+                                query.origin(),
+                                query.brandId(),
+                                query.categoryId(),
+                                rowsPerBucket.containsKey(bucket) ? sumPrice(rowsPerBucket.get(bucket)) : BigInteger.ZERO,
+                                rowsPerBucket.containsKey(bucket) ? sumCount(rowsPerBucket.get(bucket)) : BigInteger.ZERO
+                        )
                 )
                 .sorted(Comparator.comparing(QueryResultRow::timeBucketStr))
                 .toList();
@@ -108,8 +115,16 @@ public class KSQLStatisticsRepository implements StatisticsRepository {
                 query.origin().map(it -> ksqlRow.getString("ORIGIN")),
                 query.brandId().map(it -> ksqlRow.getString("BRANDID")),
                 query.categoryId().map(it -> ksqlRow.getString("CATEGORYID")),
-                ksqlRow.getLong("SUMPRICE"),
-                ksqlRow.getLong("COUNT")
+                BigInteger.valueOf(ksqlRow.getLong("SUMPRICE")),
+                BigInteger.valueOf(ksqlRow.getLong("COUNT"))
         );
+    }
+
+    private BigInteger sumPrice(List<QueryResultRow> rows) {
+        return rows.stream().map(QueryResultRow::sumPrice).reduce(BigInteger::add).get();
+    }
+
+    private BigInteger sumCount(List<QueryResultRow> rows) {
+        return rows.stream().map(QueryResultRow::count).reduce(BigInteger::add).get();
     }
 }

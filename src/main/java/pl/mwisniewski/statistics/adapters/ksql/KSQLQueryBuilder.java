@@ -29,12 +29,7 @@ public class KSQLQueryBuilder {
     }
 
     private String from() {
-        String tableName = "aggregates";
-        tableName += origin.isPresent() ? "_origin" : "";
-        tableName += brandId.isPresent() ? "_brandId" : "";
-        tableName += categoryId.isPresent() ? "_categoryId" : "";
-
-        return "FROM %s".formatted(tableName);
+        return "FROM aggregates";
     }
 
     private String where() {
