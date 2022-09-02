@@ -4,6 +4,8 @@ import io.confluent.ksql.api.client.BatchedQueryResult;
 import io.confluent.ksql.api.client.Client;
 import io.confluent.ksql.api.client.ClientOptions;
 import io.confluent.ksql.api.client.Row;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -44,10 +46,17 @@ public class KSQLStatisticsRepository implements StatisticsRepository {
         String ksqlQuery = aggregatesKSQLQuery(query);
         BatchedQueryResult batchedQueryResult = client.executeQuery(ksqlQuery);
 
+        long start, stop;
+
+        start = System.currentTimeMillis(); // Start profiling.
         List<Row> resultRows;
         try {
             resultRows = batchedQueryResult.get();
+            stop = System.currentTimeMillis();
+            logger.info("Query succeeded in {} seconds", ((double) stop - (double) start) / 1000.0);
         } catch (Exception e) {
+            stop = System.currentTimeMillis();
+            logger.warn("Query unsuccessful in {} seconds", ((double) stop - (double) start) / 1000.0);
             throw new RuntimeException("Could not get rows from ksql database", e);
         }
 
@@ -128,4 +137,6 @@ public class KSQLStatisticsRepository implements StatisticsRepository {
     private BigInteger sumCount(List<QueryResultRow> rows) {
         return rows.stream().map(QueryResultRow::count).reduce(BigInteger::add).get();
     }
+
+    private final Logger logger = LoggerFactory.getLogger(KSQLStatisticsRepository.class);
 }
