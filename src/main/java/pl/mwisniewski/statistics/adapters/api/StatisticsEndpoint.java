@@ -34,7 +34,13 @@ public class StatisticsEndpoint {
             @RequestBody(required = false) AggregatesResponse expectedResult
     ) {
         AggregatesQuery query = domainQuery(timeRangeStr, action, aggregates, origin, brandId, categoryId);
+
+        long start, stop;
+        start = System.currentTimeMillis(); // Start profiling.
         AggregatesQueryResult result = statisticsService.getAggregates(query);
+        stop = System.currentTimeMillis();
+        logger.info("Query run in {} seconds", ((double) stop - (double) start) / 1000.0);
+
         AggregatesResponse response = createEndpointResponse(query, result);
 
         if (!response.equals(expectedResult)) {
