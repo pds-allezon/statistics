@@ -8,7 +8,6 @@ import pl.mwisniewski.statistics.domain.model.AggregatesQueryResult;
 import pl.mwisniewski.statistics.domain.model.QueryResultRow;
 import pl.mwisniewski.statistics.domain.port.StatisticsRepository;
 
-import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -33,8 +32,8 @@ public class MongoStatisticsRepository implements StatisticsRepository {
                 userTagEvent.origin(),
                 userTagEvent.productInfo().brandId(),
                 userTagEvent.productInfo().categoryId(),
-                BigInteger.valueOf(userTagEvent.productInfo().price()),
-                BigInteger.ONE
+                userTagEvent.productInfo().price(),
+                1
         );
         mongoPersistentRepository.addDocument(document);
     }
@@ -65,8 +64,8 @@ public class MongoStatisticsRepository implements StatisticsRepository {
                                 query.origin(),
                                 query.brandId(),
                                 query.categoryId(),
-                                rowsPerBucket.containsKey(bucket) ? sumPrice(rowsPerBucket.get(bucket)) : BigInteger.ZERO,
-                                rowsPerBucket.containsKey(bucket) ? sumCount(rowsPerBucket.get(bucket)) : BigInteger.ZERO
+                                rowsPerBucket.containsKey(bucket) ? sumPrice(rowsPerBucket.get(bucket)) : 0L,
+                                rowsPerBucket.containsKey(bucket) ? sumCount(rowsPerBucket.get(bucket)) : 0L
                         )
                 )
                 .sorted(Comparator.comparing(QueryResultRow::timeBucketStr))
@@ -100,12 +99,12 @@ public class MongoStatisticsRepository implements StatisticsRepository {
         );
     }
 
-    private BigInteger sumPrice(List<QueryResultRow> rows) {
-        return rows.stream().map(QueryResultRow::sumPrice).reduce(BigInteger::add).get();
+    private long sumPrice(List<QueryResultRow> rows) {
+        return rows.stream().map(QueryResultRow::sumPrice).reduce(Long::sum).get();
     }
 
-    private BigInteger sumCount(List<QueryResultRow> rows) {
-        return rows.stream().map(QueryResultRow::count).reduce(BigInteger::add).get();
+    private long sumCount(List<QueryResultRow> rows) {
+        return rows.stream().map(QueryResultRow::count).reduce(Long::sum).get();
     }
 
     private String timeToBucket(String time) {

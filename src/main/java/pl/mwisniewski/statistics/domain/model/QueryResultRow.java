@@ -1,6 +1,5 @@
 package pl.mwisniewski.statistics.domain.model;
 
-import java.math.BigInteger;
 import java.util.Optional;
 
 public record QueryResultRow(
@@ -9,7 +8,7 @@ public record QueryResultRow(
         Optional<String> origin,
         Optional<String> brandId,
         Optional<String> categoryId,
-        BigInteger sumPrice,
-        BigInteger count
+        long sumPrice,
+        long count
 ) {
 }

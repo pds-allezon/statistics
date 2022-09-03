@@ -5,7 +5,6 @@ import pl.mwisniewski.statistics.domain.model.AggregatesQuery;
 import pl.mwisniewski.statistics.domain.model.AggregatesQueryResult;
 import pl.mwisniewski.statistics.domain.model.QueryResultRow;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -62,7 +61,7 @@ public record AggregatesResponse(
     }
 
     private static List<String> createAggregatesRow(QueryResultRow row, List<Aggregate> aggregates) {
-        List<BigInteger> values = new ArrayList<>();
+        List<Long> values = new ArrayList<>();
         values.add(aggregates.get(0) == Aggregate.COUNT ? row.count() : row.sumPrice());
 
         if (aggregates.size() > 1) {

@@ -7,7 +7,6 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Repository;
 import pl.mwisniewski.statistics.domain.model.AggregatesQuery;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -59,9 +58,9 @@ class MongoPersistentRepository {
                 .aggregate(List.of(aggregateMatch, aggregateGroup))
                 .map(doc ->
                         new AggregatesResultDocument(
-                                doc.getString("_id"),
-                                BigInteger.valueOf(doc.getLong("sumPrice")),
-                                BigInteger.valueOf(doc.getLong("count"))
+                                doc.getString("_id") + ":00",
+                                doc.getLong("sumPrice"),
+                                doc.getLong("count")
                         )
                 ).forEach(result::add);
 
