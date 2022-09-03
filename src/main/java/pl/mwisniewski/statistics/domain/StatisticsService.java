@@ -7,13 +7,13 @@ import pl.mwisniewski.statistics.domain.port.StatisticsRepository;
 
 @Component
 public class StatisticsService {
-    private final StatisticsRepository statisticsProvider;
+    private final StatisticsRepository statisticsRepository;
 
     public StatisticsService(StatisticsRepository statisticsRepository) {
-        this.statisticsProvider = statisticsRepository;
+        this.statisticsRepository = statisticsRepository;
     }
 
     public AggregatesQueryResult getAggregates(AggregatesQuery query) {
-        return statisticsProvider.getAggregates(query);
+        return statisticsRepository.getAggregates(query);
     }
 }

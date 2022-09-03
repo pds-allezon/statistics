@@ -2,6 +2,7 @@ package pl.mwisniewski.statistics.adapters.mongo;
 
 import com.mongodb.client.model.*;
 import org.bson.conversions.Bson;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Repository;
 import pl.mwisniewski.statistics.domain.model.AggregatesQuery;
@@ -13,6 +14,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 @Repository
+@Profile("prod")
 class MongoPersistentRepository {
     final MongoTemplate mongoTemplate;
 
