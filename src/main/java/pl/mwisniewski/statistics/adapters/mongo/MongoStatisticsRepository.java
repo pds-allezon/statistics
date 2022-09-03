@@ -1,12 +1,8 @@
-package pl.mwisniewski.statistics.adapters.ksql;
+package pl.mwisniewski.statistics.adapters.mongo;
 
-import io.confluent.ksql.api.client.BatchedQueryResult;
-import io.confluent.ksql.api.client.Client;
-import io.confluent.ksql.api.client.ClientOptions;
-import io.confluent.ksql.api.client.Row;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-import pl.mwisniewski.statistics.domain.model.Action;
+import pl.mwisniewski.statistics.adapters.UserTagEvent;
 import pl.mwisniewski.statistics.domain.model.AggregatesQuery;
 import pl.mwisniewski.statistics.domain.model.AggregatesQueryResult;
 import pl.mwisniewski.statistics.domain.model.QueryResultRow;
@@ -22,56 +18,41 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
-public class KSQLStatisticsRepository implements StatisticsRepository {
-    private final Client client;
+@Profile("prod")
+public class MongoStatisticsRepository implements StatisticsRepository {
+    private final MongoPersistentRepository mongoPersistentRepository;
 
-    public KSQLStatisticsRepository(
-            @Value("${aggregates.ksql.server.host}") String host,
-            @Value("${aggregates.ksql.server.port}") int port
-    ) {
-        ClientOptions options = ClientOptions.create()
-                .setExecuteQueryMaxResultRows(100000)
-                .setHost(host)
-                .setPort(port);
+    public MongoStatisticsRepository(MongoPersistentRepository mongoPersistentRepository) {
+        this.mongoPersistentRepository = mongoPersistentRepository;
+    }
 
-        this.client = Client.create(options);
+    public void addUserTagStats(UserTagEvent userTagEvent) {
+        StatisticsEntryDocument document = new StatisticsEntryDocument(
+                timeToBucket(userTagEvent.time()),
+                userTagEvent.action(),
+                userTagEvent.origin(),
+                userTagEvent.productInfo().brandId(),
+                userTagEvent.productInfo().categoryId(),
+                BigInteger.valueOf(userTagEvent.productInfo().price()),
+                BigInteger.ONE
+        );
+        mongoPersistentRepository.addDocument(document);
     }
 
     @Override
     public AggregatesQueryResult getAggregates(AggregatesQuery query) {
-        String ksqlQuery = aggregatesKSQLQuery(query);
-        BatchedQueryResult batchedQueryResult = client.executeQuery(ksqlQuery);
-
-        List<Row> resultRows;
-        try {
-            resultRows = batchedQueryResult.get();
-        } catch (Exception e) {
-            throw new RuntimeException("Could not get rows from ksql database", e);
-        }
+        List<AggregatesResultDocument> documents = mongoPersistentRepository.retrieveDocuments(query);
 
         return new AggregatesQueryResult(
-                generateResultRows(query, resultRows)
+                generateResultRows(query, documents)
         );
     }
 
-    private String aggregatesKSQLQuery(AggregatesQuery query) {
-        KSQLQueryBuilder builder = KSQLQueryBuilder.builder(
-                query.bucketRange().startBucket(), query.bucketRange().endBucket(), query.action().toString()
-        );
-
-        builder = query.origin().map(builder::withOrigin).orElse(builder);
-        builder = query.brandId().map(builder::withBrandId).orElse(builder);
-        builder = query.categoryId().map(builder::withCategoryId).orElse(builder);
-
-        return builder.build();
-    }
-
-    private List<QueryResultRow> generateResultRows(AggregatesQuery query, List<Row> ksqlRows) {
+    private List<QueryResultRow> generateResultRows(AggregatesQuery query, List<AggregatesResultDocument> documents) {
         List<String> buckets = generateBuckets(
                 query.bucketRange().startBucket(), query.bucketRange().endBucket()
         );
-
-        List<QueryResultRow> domainRows = ksqlRows.stream().map(it -> toDomainRow(query, it)).toList();
+        List<QueryResultRow> domainRows = documents.stream().map(it -> toDomainRow(query, it)).toList();
 
         Map<String, List<QueryResultRow>> rowsPerBucket = domainRows.stream()
                 .collect(Collectors.groupingBy(QueryResultRow::timeBucketStr));
@@ -107,15 +88,15 @@ public class KSQLStatisticsRepository implements StatisticsRepository {
         return buckets;
     }
 
-    private QueryResultRow toDomainRow(AggregatesQuery query, Row ksqlRow) {
+    private QueryResultRow toDomainRow(AggregatesQuery query, AggregatesResultDocument document) {
         return new QueryResultRow(
-                ksqlRow.getString("BUCKET") + ":00",
-                Action.valueOf(ksqlRow.getString("ACTION")),
-                query.origin().map(it -> ksqlRow.getString("ORIGIN")),
-                query.brandId().map(it -> ksqlRow.getString("BRANDID")),
-                query.categoryId().map(it -> ksqlRow.getString("CATEGORYID")),
-                BigInteger.valueOf(ksqlRow.getLong("SUMPRICE")),
-                BigInteger.valueOf(ksqlRow.getLong("COUNT"))
+                document.bucket(),
+                query.action(),
+                query.origin(),
+                query.brandId(),
+                query.categoryId(),
+                document.sumPrice(),
+                document.count()
         );
     }
 
@@ -125,5 +106,9 @@ public class KSQLStatisticsRepository implements StatisticsRepository {
 
     private BigInteger sumCount(List<QueryResultRow> rows) {
         return rows.stream().map(QueryResultRow::count).reduce(BigInteger::add).get();
+    }
+
+    private String timeToBucket(String time) {
+        return time.substring(0, 16);
     }
 }

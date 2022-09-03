@@ -19,6 +19,8 @@ dependencies {
 	implementation('org.springframework.boot:spring-boot-starter-web'){
 		exclude module: 'logback-classic'
 	}
+	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+	implementation 'org.springframework.data:spring-data-mongodb:3.4.2'
 	implementation 'org.springframework.kafka:spring-kafka:2.9.0'
 	implementation 'io.confluent.ksql:ksqldb-api-client:7.2.0'
 	implementation 'io.confluent.ksql:ksqldb-udf:7.2.0'
